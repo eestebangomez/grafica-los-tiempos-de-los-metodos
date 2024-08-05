@@ -28,6 +28,9 @@ if len(archivos_db) >= 2:
     conexiones = [sqlite3.connect(archivo) for archivo in archivos_db]
 
     # Leer los datos de las consultas
+    # metodo de Recarga: Recharge
+    # Flujo de recarga de saldo positivo: Recharge Positive Flow
+    # Tiempo de conexión con la LSAM: Recharge Card-SAM Connect
     data = []
     for conn, archivo in zip(conexiones, archivos_db):
         query = """
@@ -38,7 +41,7 @@ if len(archivos_db) >= 2:
                 ROW_NUMBER() OVER (PARTITION BY Metodo ORDER BY Duracion) AS NumFila,
                 COUNT(Duracion) OVER (PARTITION BY Metodo) AS TotalFilas
             FROM Times
-            WHERE Metodo LIKE 'Recharge'
+            WHERE Metodo LIKE 'Recharge Card-SAM Connect'
             )
             SELECT
             Metodo,
@@ -69,6 +72,15 @@ if len(archivos_db) >= 2:
     print("Datos obtenidos:")
     print(df_combined)
 
+    # Ajustar el tamaño de la fuente
+    plt.rcParams.update({
+        'axes.titlesize': 16,
+        'axes.labelsize': 14,
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'legend.fontsize': 12
+    })
+
     # Preparar los datos para graficar
     dispositivos = df_combined['Archivo'].unique()
     avg_values = df_combined['promedio']
@@ -91,13 +103,11 @@ if len(archivos_db) >= 2:
     bars = ax.bar(np.arange(len(dispositivos)), med_values, color='lightgreen', label='Mediana', capsize=5)
 
     # Añadir barras de error para el rango mínimo y máximo
-    ax.errorbar(np.arange(len(dispositivos)), med_values, yerr=[error_lower, error_upper], fmt='o', color='black', capsize=5, label='Rango (mínimo a máximo)')
 
     # Añadir etiquetas y título
     ax.set_xlabel('Dispositivos')
     ax.set_ylabel('Duracion (segundos)')
-    #ax.set_title('Tiempo de ejecución en segundos por dispositivo en el Flujo de recarga de saldo positivo')
-    ax.set_title('Tiempo de ejecución en segundos por dispositivo en el metodo de Recarga')
+    ax.set_title('Tiempo de ejecución en segundos por dispositivo para conectar con la LSAM')
     ax.set_xticks(np.arange(len(dispositivos)))
     ax.set_xticklabels(dispositivos, rotation=45, ha='right')
     ax.legend()
